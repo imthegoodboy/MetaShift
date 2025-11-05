@@ -20,7 +20,9 @@ if (!cached) {
 
 export async function getDb(dbName = process.env.MONGO_DB || "metashift") {
   if (!cached) throw new Error("Mongo client not initialized");
-  if (!cached.topology?.isConnected()) {
+  try {
+    await cached.db("admin").command({ ping: 1 });
+  } catch (e) {
     await cached.connect();
   }
   return cached.db(dbName);
@@ -28,7 +30,9 @@ export async function getDb(dbName = process.env.MONGO_DB || "metashift") {
 
 export async function getClient() {
   if (!cached) throw new Error("Mongo client not initialized");
-  if (!cached.topology?.isConnected()) {
+  try {
+    await cached.db("admin").command({ ping: 1 });
+  } catch (e) {
     await cached.connect();
   }
   return cached;
