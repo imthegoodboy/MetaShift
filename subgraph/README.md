@@ -8,3 +8,4 @@ Plan:
 To bootstrap later:
 - graph init --contract-name MetaShiftAdManager --from-contract <address> --network amoy
 
+
