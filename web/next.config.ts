@@ -5,7 +5,16 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   images: {
-    domains: ['localhost'], // Add more domains if needed for production
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost'
+      },
+      {
+        protocol: 'https',
+        hostname: 'metashift.xyz'
+      }
+    ]
   }
 };
 
