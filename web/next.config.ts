@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  turbopack: {
+    root: __dirname,
+  },
+  images: {
+    domains: ['localhost'], // Add more domains if needed for production
+  }
 };
 
 export default nextConfig;

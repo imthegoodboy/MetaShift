@@ -1,39 +1,146 @@
-"use client";
-import { useState } from "react";
-import axios from "axios";
+'use client';
+import Layout from '../../components/Layout';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useState } from 'react';
+import { useAccount } from 'wagmi';
+import axios from 'axios';
 
 export default function HostPage() {
-  const [slotURI, setSlotURI] = useState("https://your-site.com/header-banner");
+  const { isConnected } = useAccount();
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [minPrice, setMinPrice] = useState('1000000000000000'); // 0.001 MATIC
   const [slotId, setSlotId] = useState<number | null>(null);
+  const [minting, setMinting] = useState(false);
+
+  async function handleMint(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name || !description) return;
+
+    try {
+      setMinting(true);
+      const res = await axios.post('/api/mintSlot', {
+        name,
+        description,
+        minPrice
+      });
+      
+      setSlotId(res.data.tokenId);
+      alert('Ad slot NFT minted successfully! ID: ' + res.data.tokenId);
+
+      // Reset form
+      setName('');
+      setDescription('');
+      setMinPrice('1000000000000000');
+    } catch (err) {
+      alert('Error: ' + (err as Error).message);
+    } finally {
+      setMinting(false);
+    }
+  }
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
-      <h1 className="text-2xl font-semibold">Host</h1>
-      <div className="mt-6 grid gap-4">
-        <label className="grid gap-2">
-          <span>Slot Metadata (placement)</span>
-          <input className="rounded border px-3 py-2" value={slotURI} onChange={(e) => setSlotURI(e.target.value)} />
-        </label>
-        <button
-          className="w-fit rounded bg-black px-4 py-2 text-white"
-          onClick={async () => {
-            const res = await axios.post("/api/mintSlot", { slotURI });
-            setSlotId(res.data.tokenId);
-          }}
-        >
-          Mint Ad Slot NFT
-        </button>
-        {slotId && (
-          <div className="rounded border p-4">
-            <h2 className="mb-2 font-medium">Embed Snippet</h2>
-            <pre className="overflow-x-auto rounded bg-zinc-100 p-3 text-xs text-zinc-800">
-{`<script async src="${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/adserve.js?slotId=${slotId}"></script>`}
-            </pre>
-            <p className="mt-2 text-sm text-zinc-500">Paste this before </p>
+    <Layout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Become a Host</h1>
+            <p className="text-lg text-gray-600">
+              Monetize your dApp or website with Web3 ads and earn crypto instantly
+            </p>
           </div>
-        )}
+
+          <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
+            <div className="flex items-center justify-between pb-4 border-b">
+              <h2 className="text-lg font-semibold">Connect Wallet</h2>
+              <ConnectButton />
+            </div>
+          </div>
+
+          {!isConnected ? (
+            <div className="text-center py-8 bg-gray-50 rounded-lg">
+              <p className="text-gray-600">Connect your wallet to continue</p>
+            </div>
+          ) : (
+            <form onSubmit={handleMint} className="bg-white shadow-lg rounded-lg p-6">
+              <h2 className="text-lg font-semibold mb-6">Create Ad Slot</h2>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Slot Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    placeholder="e.g., Homepage Banner"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                    className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    placeholder="Describe where this ad slot will appear and any requirements"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Minimum Price Per View (wei)
+                  </label>
+                  <input
+                    type="text"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    placeholder="1000000000000000"
+                  />
+                  <p className="mt-1 text-sm text-gray-500">Default: 0.001 MATIC per view</p>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="submit"
+                    disabled={minting}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {minting ? 'Minting...' : 'Mint Ad Slot NFT'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {slotId && (
+            <div className="mt-8 bg-white shadow-lg rounded-lg p-6">
+              <h2 className="text-lg font-semibold mb-4">Integration Code</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Add this code to your website or dApp where you want the ad to appear:
+              </p>
+              <pre className="bg-gray-50 p-4 rounded-md overflow-x-auto">
+                <code>{`<script src="${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/adserve.js"></script>
+<div 
+  class="metashift-ad" 
+  data-slot-id="${slotId}"
+  style="width: 300px; height: 250px;"
+></div>`}</code>
+              </pre>
+            </div>
+          )}
+
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 }
 
